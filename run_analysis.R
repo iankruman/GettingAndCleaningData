@@ -66,6 +66,9 @@ names(data)[c(-1,-2,-3)] <- gsub("mean", "Mean", names(data)[c(-1,-2,-3)])
 names(data)[c(-1,-2,-3)] <- gsub("std", "Std", names(data)[c(-1,-2,-3)])
 names(data)[c(-1,-2,-3)] <- gsub("\\.|\\(|\\)|-", "", names(data)[c(-1,-2,-3)])
 
+## Write accelerometer data dataframe to text file
+write.table(data, "AccelerometerData.txt")
+
 ## Load plyr library and use ddply to get the mean of each numeric column 
 ## for each combination of subjectID and ActivityName using numcolwise(mean)
 library(plyr)
@@ -74,6 +77,5 @@ aveData <- ddply(data, .(SubjectID, ActivityName), numcolwise(mean))
 ## Rename averaged columns (all but columns 1 and 2) to indicate they are average values
 names(aveData) <- c(names(table)[1:2], paste(names(table)[c(-1,-2)], "Average", sep = ""))
 
-## Write dataframes to text files
-write.table(data, "AccelerometerData.txt")
+## Write average accelerometer data dataframe to text file
 write.table(aveData, "AverageAccelerometerData.txt")
