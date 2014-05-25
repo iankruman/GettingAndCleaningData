@@ -41,17 +41,11 @@ X_test <- read.table("./UCI HAR Dataset/test/X_test.txt", colClasses = "numeric"
 X_train <- read.table("./UCI HAR Dataset/train/X_train.txt", colClasses = "numeric",
         col.names = featureNames, check.names = FALSE)
 
-## Create 'Train' and 'Test' vectors to denote where each row comes from in merged dataframe
-setType_test <- as.data.frame((rep("TEST", nrow(subject_test))))
-setType_train <- as.data.frame((rep("TRAIN", nrow(subject_train))))
-names(setType_test) <- "DataSetType"
-names(setType_train) <- "DataSetType"
-
 ## Create test data frame by column binding test subject, y, set type, and X data
-testData <- cbind(subject_test, y_test, setType_test, X_test)
+testData <- cbind(subject_test, y_test, X_test)
 
 ## Create train data frame using same method as test data
-trainData <- cbind(subject_train, y_train, setType_train, X_train)
+trainData <- cbind(subject_train, y_train, X_train)
 
 ## Merge test and train sets by rbinding the dataframes
 data <- rbind(trainData, testData)
@@ -60,16 +54,26 @@ data <- rbind(trainData, testData)
 data <- merge(activity_labels, data)
 
 ## Remove everything from the workspace except the merged dataframe
-rm(list = setdiff(ls(), "data"))
+##rm(list = setdiff(ls(), "data"))
 
 ## Remove all 'X' columns except those containing std or mean
-## (Keep only the first 4 columns and column names containing 'std()' or 'mean()' )
-data <- data[, c(1:4, grep("mean\\(\\)|std\\(\\)", names(data)))]
+## (Keep only the first 3 columns and column names containing 'std()' or 'mean()' )
+data <- data[, c(1:3, grep("mean\\(\\)|std\\(\\)", names(data)))]
+
+## Get rid of old feature name indexes, set mean and std to Mean and Std, remove special characters
+names(data)[c(-1,-2,-3)] <- sapply(names(data)[c(-1,-2,-3)], function(data) strsplit(data, " ")[[1]][2])
+names(data)[c(-1,-2,-3)] <- gsub("mean", "Mean", names(data)[c(-1,-2,-3)])
+names(data)[c(-1,-2,-3)] <- gsub("std", "Std", names(data)[c(-1,-2,-3)])
+names(data)[c(-1,-2,-3)] <- gsub("\\.|\\(|\\)|-", "", names(data)[c(-1,-2,-3)])
 
 ## Load plyr library and use ddply to get the mean of each numeric column 
 ## for each combination of subjectID and ActivityName using numcolwise(mean)
 library(plyr)
-table <- ddply(data, .(SubjectID, ActivityName), numcolwise(mean))
+aveData <- ddply(data, .(SubjectID, ActivityName), numcolwise(mean))
 
 ## Rename averaged columns (all but columns 1 and 2) to indicate they are average values
-names(table) <- c(names(table)[1:2], paste(names(table)[c(-1,-2)], "Average"))
+names(aveData) <- c(names(table)[1:2], paste(names(table)[c(-1,-2)], "Average", sep = ""))
+
+## Write dataframes to text files
+write.table(data, "AccelerometerData.txt")
+write.table(aveData, "AverageAccelerometerData.txt")
